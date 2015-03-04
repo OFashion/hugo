@@ -25,6 +25,19 @@ public class HugoActivity extends Activity {
     Log.d("Charming", charmer.askHowAreYou());
 
     startSleepyThread();
+
+    retrolambda();
+  }
+
+  /**
+   *  hugo working with retrolambda
+   */
+  private void retrolambda() {
+    new Thread(() -> {
+      for(int i = 0; i < 100; i++){
+        printArgs(String.valueOf(i));
+      }
+    }).run();
   }
 
   @DebugLog

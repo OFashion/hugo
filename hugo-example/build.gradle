@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 buildscript {
   dependencies {
     repositories {
@@ -9,13 +11,25 @@ buildscript {
 
     classpath 'com.android.tools.build:gradle:1.1.0-rc3'
     classpath 'com.jakewharton.hugo:hugo-plugin:1.2.2-SNAPSHOT'
+    classpath 'me.tatarka:gradle-retrolambda:2.5.0'
   }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'hugo'
 
+String java8 = getJavaVersion(8)
+String java7 = getJavaVersion(7)
+
+retrolambda {
+    jdk java8
+    oldJdk java7
+    javaVersion JavaVersion.VERSION_1_7
+}
+
 dependencies {
+    retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:1.+'
   repositories {
     mavenCentral()
 
@@ -29,8 +43,8 @@ android {
   buildToolsVersion '21.1.2'
 
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_7
-    targetCompatibility JavaVersion.VERSION_1_7
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
   }
 
   buildTypes {
@@ -38,4 +52,20 @@ android {
       applicationIdSuffix '.dev'
     }
   }
+}
+
+String getJavaVersion(Integer v) {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        // windows: using $JAVA7_HOME $JAVA8_HOME to get java environment
+        return System.getenv("JAVA" + v + "_HOME")
+    } else {
+        // mac: /usr/libexec/java_home -v 1.$v
+        // ref: https://github.com/evant/gradle-retrolambda/issues/61
+        def sout = new StringBuffer()
+        def proc = "/usr/libexec/java_home -v 1.$v".execute()
+        proc.consumeProcessOutput(sout, new StringBuffer())
+        proc.waitForOrKill(1000)
+        return sout.toString().replace("\n", "").replace("\r", "")
+    }
+
 }
